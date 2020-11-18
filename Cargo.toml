@@ -1,0 +1,15 @@
+[package]
+name = "task-streamer"
+version = "0.1.0"
+authors = ["Matt Chun-Lum <matt@questionable.engineering>"]
+edition = "2018"
+
+[profile.release]
+lto = true
+
+[dependencies]
+actix-web = "3"
+clap = "*"
+config = "0.10"
+shlex = "0.1.1"
+task-hookrs = "*"
