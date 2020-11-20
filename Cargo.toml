@@ -8,7 +8,9 @@ edition = "2018"
 lto = true
 
 [dependencies]
+actix = "0.10.0"
 actix-web = "3"
+actix-web-actors = "3"
 clap = "*"
 config = "0.10"
 shlex = "0.1.1"

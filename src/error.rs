@@ -1,3 +1,6 @@
+use actix_web_actors::ws::ProtocolError;
+
+
 pub type Result<T> = std::result::Result<T, TSError>;
 
 /// TSError enumerates all possible errors returned by this library
@@ -8,6 +11,9 @@ pub enum TSError {
 
     /// Represents all other cases of IO Error
     IOError(std::io::Error),
+
+    /// Represents all other cases of websocket ProtocolError
+    ProtocolError(ProtocolError),
 }
 
 impl std::error::Error for TSError {
@@ -16,6 +22,7 @@ impl std::error::Error for TSError {
             TSError::MyError() => None,
             TSError::Error(_) => None,
             TSError::IOError(ref err) => Some(err),
+            TSError::ProtocolError(ref err) => Some(err),
         }
     }
 }
@@ -26,6 +33,7 @@ impl std::fmt::Display for TSError {
             TSError::MyError() => write!(f, "some error message"),
             TSError::Error(ref msg) => write!(f, "{}", msg),
             TSError::IOError(ref err) => err.fmt(f),
+            TSError::ProtocolError(ref err) => err.fmt(f),
         }
     }
 }
@@ -33,5 +41,11 @@ impl std::fmt::Display for TSError {
 impl From<std::io::Error> for TSError {
     fn from(err: std::io::Error) -> TSError {
         TSError::IOError(err)
+    }
+}
+
+impl From<ProtocolError> for TSError {
+    fn from(err: ProtocolError) -> TSError {
+        TSError::ProtocolError(err)
     }
 }

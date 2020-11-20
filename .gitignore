@@ -1,1 +1,3 @@
+spirit.toml
+*.sw[a-z]
 /target
