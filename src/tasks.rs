@@ -10,10 +10,10 @@ pub struct TaskClient {
 }
 
 impl TaskClient {
-    pub fn new() -> Result<Self> {
+    pub fn new(filter: &str) -> Result<Self> {
         let mut client = TaskClient {
             tasks: Vec::new(),
-            filter: "status:pending".to_string(),
+            filter: filter.to_string(),
         };
 
         client.refresh_tasks()?;

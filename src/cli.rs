@@ -12,7 +12,7 @@ pub fn cli() -> ArgMatches<'static> {
                 .about("start the server")
                 .arg(
                     Arg::with_name("port")
-                        .help("the port to bind to")
+                        .help("The port to bind to")
                         .long("port")
                         .short("p")
                         .default_value("8128")
@@ -20,12 +20,20 @@ pub fn cli() -> ArgMatches<'static> {
                 )
                 .arg(
                     Arg::with_name("bind")
-                        .help("the address to bind to")
+                        .help("The address to bind to")
                         .long("bind")
                         .short("b")
                         .takes_value(true)
                         .multiple(true)
                         .number_of_values(1)
+                        .required(false),
+                )
+                .arg(
+                    Arg::with_name("filter")
+                        .help("The filter to use for listing tasks")
+                        .long("filter")
+                        .short("f")
+                        .default_value("status:pending")
                         .required(false),
                 ),
         );

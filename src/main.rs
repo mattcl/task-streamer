@@ -1,12 +1,15 @@
 use std::collections::HashSet;
-use std::sync::Mutex;
 
-use actix::prelude::*;
 use crate::app::Server;
+use crate::tasks::TaskClient;
+
+use crate::error::UnwrapOrExit;
 
 mod app;
 mod cli;
+mod config;
 mod error;
+mod session;
 mod tasks;
 
 /*
@@ -18,15 +21,9 @@ async fn main() -> std::io::Result<()> {
     let matches = cli::cli();
     match matches.subcommand() {
         ("server", Some(server_matches)) => {
-            let port = server_matches.value_of("port").unwrap();
-
-            let mut interfaces: HashSet<&str> = vec!["127.0.0.1"].into_iter().collect();
-
-            if server_matches.is_present("bind") {
-                interfaces = server_matches.values_of("bind").unwrap().collect();
-            }
-
-            Server::start(&port, &interfaces).await
+            let config = config::Config::new(&server_matches).unwrap_or_exit("Could not load config file");
+            let client = TaskClient::new(&config.filter.clone().unwrap()).unwrap_or_exit("Could not create task client");
+            Server::start(&config, client).await
         }
         _ => Ok(()),
     }
