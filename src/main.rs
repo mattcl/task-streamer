@@ -21,11 +21,12 @@ async fn main() -> std::io::Result<()> {
     let matches = cli::cli();
     match matches.subcommand() {
         ("server", Some(server_matches)) => {
-            let config = config::Config::new(&server_matches).unwrap_or_exit("Could not load config file");
-            let client = TaskClient::new(&config.filter.clone().unwrap()).unwrap_or_exit("Could not create task client");
+            let config =
+                config::Config::new(&server_matches).unwrap_or_exit("Could not load config file");
+            let client = TaskClient::new(&config.filter.clone().unwrap())
+                .unwrap_or_exit("Could not create task client");
             Server::start(&config, client).await
         }
         _ => Ok(()),
     }
 }
-

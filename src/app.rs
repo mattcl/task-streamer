@@ -3,14 +3,13 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use actix::prelude::*;
-use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web::middleware::Logger;
+use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_actors::ws;
 
 use crate::config::Config;
-use crate::tasks::TaskClient;
 use crate::session::{SessionManager, TaskSession, TasksUpdated};
-
+use crate::tasks::TaskClient;
 
 pub struct AppState {
     pub client: Mutex<TaskClient>,
@@ -67,7 +66,7 @@ async fn refresh_tasks(data: web::Data<AppState>) -> impl Responder {
             let addr = &data.session_manager;
             addr.do_send(TasksUpdated);
             HttpResponse::Ok()
-        },
+        }
         // FIXME: actual error message - MCL - 2020-11-17
         Err(_) => HttpResponse::InternalServerError(),
     }

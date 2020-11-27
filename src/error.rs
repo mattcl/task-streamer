@@ -1,6 +1,5 @@
 use actix_web_actors::ws::ProtocolError;
 
-
 pub type Result<T> = std::result::Result<T, TSError>;
 
 /// TSError enumerates all possible errors returned by this library

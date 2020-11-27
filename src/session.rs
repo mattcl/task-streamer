@@ -1,6 +1,6 @@
+use log::{debug, error, info};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use log::{debug, info, error};
 
 use actix::prelude::*;
 use actix_web_actors::ws;
@@ -141,7 +141,9 @@ impl Actor for TaskSession {
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        self.addr.do_send(Disconnect { id: self.id.clone() });
+        self.addr.do_send(Disconnect {
+            id: self.id.clone(),
+        });
         Running::Stop
     }
 }
@@ -155,11 +157,7 @@ impl Handler<Message> for TaskSession {
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for TaskSession {
-    fn handle(
-        &mut self,
-        msg: Result<ws::Message, ws::ProtocolError>,
-        ctx: &mut Self::Context,
-    ) {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         let msg = match msg {
             Err(_) => {
                 ctx.stop();
@@ -177,7 +175,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for TaskSession {
             ws::Message::Pong(_) => {
                 self.hb = Instant::now();
             }
-            ws::Message::Text(_) => { }
+            ws::Message::Text(_) => {}
             ws::Message::Binary(_) => error!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);
