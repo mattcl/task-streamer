@@ -1,34 +1,40 @@
-use std::collections::HashSet;
 use std::sync::Mutex;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use actix::prelude::*;
+use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{get, http, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_actors::ws;
 
 use crate::config::Config;
 use crate::session::{SessionManager, TaskSession, TasksUpdated};
-use crate::tasks::TaskClient;
+use task_hookrs::task::Task;
 
 pub struct AppState {
-    pub client: Mutex<TaskClient>,
+    pub tasks: Mutex<Vec<Task>>,
     pub session_manager: Addr<SessionManager>,
 }
 
 pub struct Server {}
 
 impl Server {
-    pub async fn start(config: &Config, client: TaskClient) -> std::io::Result<()> {
+    pub async fn start(config: Config) -> std::io::Result<()> {
         env_logger::init();
 
         let state = web::Data::new(AppState {
-            // FIXME: get rid of unwrap - MCL - 2020-11-17
-            client: Mutex::new(client),
+            tasks: Mutex::new(Vec::new()),
             session_manager: SessionManager::new().start(),
         });
 
         let mut server = HttpServer::new(move || {
+	    let cors = Cors::default()
+		.allow_any_origin()
+		.allowed_methods(vec!["GET", "POST"])
+		.allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+		.allowed_header(http::header::CONTENT_TYPE)
+		.max_age(3600);
+
             let api = web::scope("/api/v1")
                 .service(tasks_list)
                 .service(refresh_tasks);
@@ -38,14 +44,15 @@ impl Server {
             App::new()
                 .wrap(Logger::default())
                 .wrap(Logger::new("%a %{User-Agent}i"))
+		.wrap(cors)
                 .app_data(state.clone())
                 .service(api)
                 .service(socket_service)
         });
 
-        let port = config.port.clone().unwrap();
+        let port = config.server.port.unwrap();
 
-        for addr in config.bind.clone().unwrap() {
+        for addr in config.server.bind.unwrap() {
             server = server.bind(&format!("{}:{}", addr, port))?;
         }
 
@@ -55,21 +62,16 @@ impl Server {
 
 #[get("/tasks")]
 async fn tasks_list(data: web::Data<AppState>) -> impl Responder {
-    HttpResponse::Ok().json(&data.client.lock().unwrap().tasks)
+    HttpResponse::Ok().json(&data.tasks)
 }
 
 #[post("/tasks")]
-async fn refresh_tasks(data: web::Data<AppState>) -> impl Responder {
-    let mut client = data.client.lock().unwrap();
-    match client.refresh_tasks() {
-        Ok(_) => {
-            let addr = &data.session_manager;
-            addr.do_send(TasksUpdated);
-            HttpResponse::Ok()
-        }
-        // FIXME: actual error message - MCL - 2020-11-17
-        Err(_) => HttpResponse::InternalServerError(),
-    }
+async fn refresh_tasks(data: web::Data<AppState>, item: web::Json<Vec<Task>>) -> impl Responder {
+    let mut tasks = data.tasks.lock().unwrap();
+    *tasks = item.0;
+    let addr = &data.session_manager;
+    addr.do_send(TasksUpdated);
+    HttpResponse::Ok()
 }
 
 pub async fn ws_index(

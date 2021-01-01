@@ -1,4 +1,5 @@
 use actix_web_actors::ws::ProtocolError;
+use reqwest;
 
 pub type Result<T> = std::result::Result<T, TSError>;
 
@@ -13,6 +14,9 @@ pub enum TSError {
 
     /// Represents all other cases of websocket ProtocolError
     ProtocolError(ProtocolError),
+
+    /// Represents all other cases of reqwest::Error
+    RequestError(reqwest::Error),
 }
 
 impl std::error::Error for TSError {
@@ -22,6 +26,7 @@ impl std::error::Error for TSError {
             TSError::Error(_) => None,
             TSError::IOError(ref err) => Some(err),
             TSError::ProtocolError(ref err) => Some(err),
+            TSError::RequestError(ref err) => Some(err),
         }
     }
 }
@@ -33,6 +38,7 @@ impl std::fmt::Display for TSError {
             TSError::Error(ref msg) => write!(f, "{}", msg),
             TSError::IOError(ref err) => err.fmt(f),
             TSError::ProtocolError(ref err) => err.fmt(f),
+            TSError::RequestError(ref err) => err.fmt(f),
         }
     }
 }
@@ -52,6 +58,12 @@ impl From<std::io::Error> for TSError {
 impl From<ProtocolError> for TSError {
     fn from(err: ProtocolError) -> TSError {
         TSError::ProtocolError(err)
+    }
+}
+
+impl From<reqwest::Error> for TSError {
+    fn from(err: reqwest::Error) -> TSError {
+        TSError::RequestError(err)
     }
 }
 

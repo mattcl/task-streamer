@@ -1,3 +1,5 @@
 spirit.toml
+task-streamer.toml
 *.sw[a-z]
 /target
+Cargo.lock

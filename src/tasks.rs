@@ -1,4 +1,7 @@
+use log::{debug, error, info};
 use std::process::Command;
+use std::cmp::Ordering;
+
 use task_hookrs::import::import;
 use task_hookrs::task::Task;
 
@@ -33,6 +36,8 @@ impl TaskClient {
             self.get_context()?.unwrap_or("".to_string())
         );
 
+        debug!("discovering tasks with filter: '{}'", filter);
+
         match shlex::split(&filter) {
             Some(cmd) => {
                 for s in cmd {
@@ -47,7 +52,21 @@ impl TaskClient {
         let output = task.output()?;
 
         match import(String::from_utf8_lossy(&output.stdout).as_bytes()) {
-            Ok(tasks) => {
+            Ok(mut tasks) => {
+                tasks.sort_by(|a, b| {
+                    let a_start = a.start();
+                    let b_start = b.start();
+
+                    if a_start.is_some() && b_start.is_none() {
+                        return Ordering::Less;
+                    }
+
+                    if a_start.is_none() && b_start.is_some() {
+                        return Ordering::Greater;
+                    }
+
+                    return Ordering::Equal;
+                });
                 self.tasks = tasks;
                 Ok(())
             }
