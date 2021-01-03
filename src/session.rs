@@ -18,6 +18,10 @@ pub struct Message(pub String);
 pub struct TasksUpdated;
 
 #[derive(Message)]
+#[rtype(result = "()")]
+pub struct TopicUpdated;
+
+#[derive(Message)]
 #[rtype(String)]
 pub struct Connect {
     pub addr: Recipient<Message>,
@@ -46,9 +50,9 @@ impl SessionManager {
         }
     }
 
-    pub fn notify_update(&self) {
+    pub fn notify_update(&self, msg: &str) {
         for session in self.sessions.values() {
-            match session.do_send(Message("tasks-updated".to_string())) {
+            match session.do_send(Message(msg.to_string())) {
                 // TODO: something better - MCL - 2020-11-24
                 Ok(_) => (),
                 Err(_) => (),
@@ -93,7 +97,19 @@ impl Handler<TasksUpdated> for SessionManager {
     fn handle(&mut self, _: TasksUpdated, _: &mut Context<Self>) -> Self::Result {
         info!("Notifying tasks updated");
 
-        self.notify_update();
+        self.notify_update("tasks-updated");
+
+        ()
+    }
+}
+
+impl Handler<TopicUpdated> for SessionManager {
+    type Result = ();
+
+    fn handle(&mut self, _: TopicUpdated, _: &mut Context<Self>) -> Self::Result {
+        info!("Notifying topic updated");
+
+        self.notify_update("topic_updated");
 
         ()
     }

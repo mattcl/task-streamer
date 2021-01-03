@@ -1,6 +1,6 @@
 use log::{debug, error, info};
-use std::process::Command;
 use std::cmp::Ordering;
+use std::process::Command;
 
 use task_hookrs::import::import;
 use task_hookrs::task::Task;

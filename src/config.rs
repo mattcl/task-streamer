@@ -19,6 +19,7 @@ pub struct Config {
 pub struct Server {
     pub port: Option<String>,
     pub bind: Option<Vec<String>>,
+    pub api_key: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -79,7 +80,7 @@ impl Config {
         }
     }
 
-    fn process_client_options(config: &mut Config, matches: &ArgMatches) {
+    pub fn process_client_options(config: &mut Config, matches: &ArgMatches) {
         let filter = matches.value_of("filter").unwrap_or("status:pending");
         if matches.occurrences_of("filter") > 0 || config.client.filter.is_none() {
             config.client.filter = Some(filter.to_string());

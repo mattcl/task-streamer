@@ -1,8 +1,9 @@
 use reqwest;
 
 use crate::config::Config;
-use crate::tasks::TaskClient;
 use crate::error::Result;
+use crate::schema::Topic;
+use crate::tasks::TaskClient;
 
 #[derive(Debug)]
 enum Verb {
@@ -31,16 +32,28 @@ impl Client {
             Verb::POST => client.post(&full_path),
         };
 
-        // TODO: figure out auth header - MCL - 2020-12-31
-        // builder.header("", self.api_key.clone())
-        builder
+        builder.header("Authorization", format!("Bearer {}", self.api_key))
     }
 
     pub async fn push_tasks(&self, task_client: &TaskClient) -> Result<()> {
-        self.base_request(Verb::POST, "tasks")
+        let response = self
+            .base_request(Verb::POST, "tasks")
             .json(&task_client.tasks)
             .send()
             .await?;
+
+        response.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn set_topic(&self, topic: Topic) -> Result<()> {
+        let response = self
+            .base_request(Verb::POST, "topic")
+            .json(&topic)
+            .send()
+            .await?;
+
+        response.error_for_status()?;
         Ok(())
     }
 }
