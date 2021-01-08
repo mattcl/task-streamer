@@ -14,11 +14,23 @@ use crate::session::{SessionManager, TaskSession, TasksUpdated, TopicUpdated};
 
 use task_hookrs::task::Task;
 
+#[derive(Debug)]
 pub struct AppState {
     pub topic: Mutex<Topic>,
     pub tasks: Mutex<Vec<Task>>,
     pub session_manager: Addr<SessionManager>,
     pub api_key: String,
+}
+
+impl AppState {
+    pub fn new(api_key: String) -> AppState {
+        AppState {
+            topic: Mutex::new(Topic::default()),
+            tasks: Mutex::new(Vec::new()),
+            session_manager: SessionManager::new().start(),
+            api_key: api_key,
+        }
+    }
 }
 
 pub struct Server {}
@@ -27,14 +39,10 @@ impl Server {
     pub async fn start(config: Config) -> std::io::Result<()> {
         env_logger::init();
 
-        let state = web::Data::new(AppState {
-            topic: Mutex::new(Topic::default()),
-            tasks: Mutex::new(Vec::new()),
-            session_manager: SessionManager::new().start(),
-            api_key: config.server.api_key.unwrap(),
-        });
+        let state = web::Data::new(AppState::new(config.server.api_key.unwrap()));
 
         let mut server = HttpServer::new(move || {
+
             let cors = Cors::default()
                 .allow_any_origin()
                 .allowed_methods(vec!["GET", "POST"])
@@ -42,21 +50,12 @@ impl Server {
                 .allowed_header(http::header::CONTENT_TYPE)
                 .max_age(3600);
 
-            let api = web::scope("/api/v1")
-                .service(get_tasks)
-                .service(set_tasks)
-                .service(get_topic)
-                .service(set_topic);
-
-            let socket_service = web::resource("/ws/").to(ws_index);
-
             App::new()
                 .wrap(Logger::default())
                 .wrap(Logger::new("%a %{User-Agent}i"))
                 .wrap(cors)
                 .app_data(state.clone())
-                .service(api)
-                .service(socket_service)
+                .configure(app_config)
         });
 
         let port = config.server.port.unwrap();
@@ -67,6 +66,21 @@ impl Server {
 
         server.run().await
     }
+}
+
+// separated out to make testing easier/consistent
+pub fn app_config(cfg: &mut web::ServiceConfig) {
+    let api = web::scope("/api/v1")
+	.service(get_tasks)
+	.service(set_tasks)
+	.service(get_topic)
+	.service(set_topic);
+
+    let socket_service = web::resource("/ws/").to(ws_index);
+
+    cfg
+        .service(api)
+        .service(socket_service);
 }
 
 #[get("/tasks")]
@@ -134,7 +148,7 @@ mod tests {
 
     // #[actix_rt::test]
     // async fn test_index_ok() {
-    //     let req = test::TestRequest::with_header("content-type", "text/plain").to_http_request();
+    //     let req = test::TestRequest::with_header("content-type", "application/json").to_http_request();
     //     let resp = index(req).await;
     //     assert_eq!(resp.status(), http::StatusCode::OK);
     // }

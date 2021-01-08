@@ -4,6 +4,14 @@ version = "0.1.0"
 authors = ["Matt Chun-Lum <matt@questionable.engineering>"]
 edition = "2018"
 
+[lib]
+name = "task_streamer"
+path = "src/lib.rs"
+
+[[bin]]
+name = "task-streamer"
+path = "src/main.rs"
+
 [profile.release]
 lto = true
 

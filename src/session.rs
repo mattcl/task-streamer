@@ -39,6 +39,7 @@ pub struct TaskSession {
     pub id: String,
 }
 
+#[derive(Debug)]
 pub struct SessionManager {
     sessions: HashMap<String, Recipient<Message>>,
 }

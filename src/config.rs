@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use crate::error::Result;
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct Config {
     #[serde(default)]
     pub server: Server,
@@ -15,14 +15,14 @@ pub struct Config {
     pub client: Client,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct Server {
     pub port: Option<String>,
     pub bind: Option<Vec<String>>,
     pub api_key: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct Client {
     pub server: Option<String>,
     pub filter: Option<String>,
