@@ -56,6 +56,12 @@ impl Config {
 
         let mut config: Self = config.try_into()?;
 
+        if matches.is_present("api_key") {
+            let key = Some(matches.value_of("api_key").unwrap().to_string());
+            config.client.api_key = key.clone();
+            config.server.api_key = key;
+        }
+
         Config::process_server_options(&mut config, matches);
         Config::process_client_options(&mut config, matches);
 
@@ -65,7 +71,7 @@ impl Config {
     fn process_server_options(config: &mut Config, matches: &ArgMatches) {
         let port = matches.value_of("port").unwrap_or("8128");
 
-        if matches.occurrences_of("port") > 0 || config.server.port.is_none() {
+        if matches.is_present("port") || config.server.port.is_none() {
             config.server.port = Some(port.to_string());
         }
 
@@ -78,6 +84,7 @@ impl Config {
 
             config.server.bind = Some(interfaces.into_iter().map(|i| i.to_string()).collect());
         }
+
     }
 
     pub fn process_client_options(config: &mut Config, matches: &ArgMatches) {
@@ -88,10 +95,6 @@ impl Config {
 
         if matches.is_present("server") {
             config.client.server = Some(matches.value_of("server").unwrap().to_string());
-        }
-
-        if matches.is_present("api_key") {
-            config.client.api_key = Some(matches.value_of("api_key").unwrap().to_string());
         }
     }
 }

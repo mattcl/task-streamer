@@ -20,6 +20,7 @@ pub fn cli() -> ArgMatches<'static> {
                 .help("Override config file path")
                 .long("config")
                 .short("c")
+                .env("TS_CONFIG")
                 .takes_value(true)
                 .required(false)
                 .global(true),
@@ -29,10 +30,10 @@ pub fn cli() -> ArgMatches<'static> {
                 .about("start the server")
                 .arg(
                     Arg::with_name("port")
-                        .help("The port to bind to")
+                        .help("The port to bind to (internal defaul to 8128")
                         .long("port")
                         .short("p")
-                        .default_value("8128")
+                        .env("TS_PORT")
                         .required(false),
                 )
                 .arg(
@@ -41,6 +42,7 @@ pub fn cli() -> ArgMatches<'static> {
                         .long("bind")
                         .short("b")
                         .takes_value(true)
+                        .env("TS_BIND")
                         .multiple(true)
                         .number_of_values(1)
                         .required(false),
